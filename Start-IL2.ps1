@@ -1,3 +1,6 @@
+#Requires -Version 5.1
+#Requires -Modules AudioDeviceCmdlets
+
 #=============================================================================
 # CONFIGURATION PHASE
 #=============================================================================
@@ -10,9 +13,14 @@ $ConfigFile = Join-Path -Path $PSScriptRoot -ChildPath "$ScriptNameBase.json"
 if (-not (Test-Path $ConfigFile)) {
     Write-Host "Configuration file not found. First-time setup required..." -ForegroundColor Yellow
 
-    # Get the full list of audio devices
-    $AllAudioDevices = Get-AudioDevice -List
+    # Get the list of playback audio devices (filter out mics / recording devices)
+    $AllAudioDevices = @(Get-AudioDevice -List | Where-Object { $_.Type -eq 'Playback' })
     $DeviceCount = $AllAudioDevices.Count
+
+    if ($DeviceCount -eq 0) {
+        Write-Host "ERROR: No playback audio devices found." -ForegroundColor Red
+        exit 1
+    }
 
     # Function to handle the numbered selection process
     function Get-UserDeviceSelection {
@@ -47,8 +55,8 @@ if (-not (Test-Path $ConfigFile)) {
         DesktopAudioName = $DesktopDevice.Name
     }
 
-    # Save to the same folder as the script with the matching name
-    $ConfigData | ConvertTo-Json | Out-File $ConfigFile
+    # Save to the same folder as the script with the matching name (UTF-8, not UTF-16)
+    $ConfigData | ConvertTo-Json | Out-File -FilePath $ConfigFile -Encoding utf8
     Write-Host "`nConfiguration saved to: $ConfigFile" -ForegroundColor Green
 }
 
@@ -103,45 +111,43 @@ $DesktopAudioID = Resolve-AudioDeviceID -SavedID $Config.DesktopAudioID -SavedNa
 if ($GameAudioID -ne $Config.GameAudioID -or $DesktopAudioID -ne $Config.DesktopAudioID) {
     $Config.GameAudioID    = $GameAudioID
     $Config.DesktopAudioID = $DesktopAudioID
-    $Config | ConvertTo-Json | Out-File $ConfigFile
+    $Config | ConvertTo-Json | Out-File -FilePath $ConfigFile -Encoding utf8
     Write-Host "Configuration updated with new device IDs." -ForegroundColor Green
 }
 
 #=============================================================================
-# INITIALIZATION
+# INITIALIZATION + SESSION MONITORING (wrapped so Ctrl+C still cleans up)
 #=============================================================================
 
-Write-Host "Setting audio to Game Device..." -ForegroundColor Gray
-Set-AudioDevice -ID $GameAudioID
+try {
+    Write-Host "Setting audio to Game Device..." -ForegroundColor Gray
+    Set-AudioDevice -ID $GameAudioID
 
-if (Get-Process "XRNeckSaferApp" -ErrorAction SilentlyContinue) {
-    Write-Host "XRNeckSafer is already running, skipping..." -ForegroundColor Yellow
-} else {
-    Start-Process "C:\Program Files\XRNeckSafer\XRNeckSaferApp.exe"
+    if (Get-Process "XRNeckSaferApp" -ErrorAction SilentlyContinue) {
+        Write-Host "XRNeckSafer is already running, skipping..." -ForegroundColor Yellow
+    } else {
+        Start-Process "C:\Program Files\XRNeckSafer\XRNeckSaferApp.exe"
+    }
+
+    if (Get-Process "IL2-SR-ClientRadio" -ErrorAction SilentlyContinue) {
+        Write-Host "IL2 SimpleRadio is already running, skipping..." -ForegroundColor Yellow
+    } else {
+        Start-Process "C:\Program Files\IL2-SimpleRadio-Standalone\IL2-SR-ClientRadio.exe" -WorkingDirectory "C:\Program Files\IL2-SimpleRadio-Standalone"
+    }
+
+    Write-Host "Waiting for Il-2 to start..." -ForegroundColor Cyan
+    while (!(Get-Process "Il-2" -ErrorAction SilentlyContinue)) {
+        Start-Sleep -Seconds 2
+    }
+
+    Write-Host "Il-2 detected. Script will now wait for the game to exit before cleaning up..." -ForegroundColor Green
+    Wait-Process -Name "Il-2"
 }
+finally {
+    Stop-Process -Name "XRNeckSaferApp"   -Force -ErrorAction SilentlyContinue
+    Stop-Process -Name "IL2-SR-ClientRadio"       -ErrorAction SilentlyContinue
 
-if (Get-Process "IL2-SR-ClientRadio" -ErrorAction SilentlyContinue) {
-    Write-Host "IL2 SimpleRadio is already running, skipping..." -ForegroundColor Yellow
-} else {
-    Start-Process "C:\Program Files\IL2-SimpleRadio-Standalone\IL2-SR-ClientRadio.exe" -WorkingDirectory "C:\Program Files\IL2-SimpleRadio-Standalone"
+    Write-Host "Restoring audio to Desktop Device..." -ForegroundColor Gray
+    Set-AudioDevice -ID $DesktopAudioID
+    Write-Host "Cleanup complete." -ForegroundColor Green
 }
-
-#=============================================================================
-# SESSION MONITORING
-#=============================================================================
-Write-Host "Waiting for Il-2 to start..." -ForegroundColor Cyan
-
-while (!(Get-Process "Il-2" -ErrorAction SilentlyContinue)) {
-    Start-Sleep -Seconds 2
-}
-
-Write-Host "Il-2 detected. Script will now wait for the game to exit before cleaning up..." -ForegroundColor Green
-
-Wait-Process -Name "Il-2"
-
-Stop-Process -Name "XRNeckSaferApp" -Force -ErrorAction SilentlyContinue
-Stop-Process -Name "IL2-SR-ClientRadio"
-
-Write-Host "Restoring audio to Desktop Device..." -ForegroundColor Gray
-Set-AudioDevice -ID $DesktopAudioID
-Write-Host "Cleanup complete." -ForegroundColor Green

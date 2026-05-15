@@ -1,0 +1,18 @@
+# Default: auto-detect text, normalize to LF in the repo
+* text=auto eol=lf
+
+# PowerShell prefers CRLF on Windows
+*.ps1   text eol=crlf
+*.psm1  text eol=crlf
+*.psd1  text eol=crlf
+
+# JSON / Markdown / config stay LF
+*.json  text eol=lf
+*.md    text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+
+# Binary
+*.png   binary
+*.jpg   binary
+*.ico   binary
