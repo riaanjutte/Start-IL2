@@ -215,8 +215,8 @@ function Get-GameProcess {
 }
 
 # Set before the try so cleanup can read them even if the session aborts early
-# $StartedXRNeckSafer = $false
-$StartedVectorXR      = $false
+$StartedXRNeckSafer   = $false
+# $StartedVectorXR      = $false
 $StartedSRS           = $false
 $StartedOpenKneeboard = $false
 
@@ -228,11 +228,11 @@ try {
         Write-Host "Warning: Could not switch to the Game audio device (is it connected?): $($_.Exception.Message)" -ForegroundColor Yellow
     }
 
-    # $StartedXRNeckSafer = Start-CompanionApp -DisplayName "XRNeckSafer" -ProcessName "XRNeckSaferApp" `
-    #     -Path "C:\Program Files\XRNeckSafer\XRNeckSaferApp.exe"
+    $StartedXRNeckSafer = Start-CompanionApp -DisplayName "XRNeckSafer" -ProcessName "XRNeckSaferApp" `
+        -Path "C:\Program Files\XRNeckSafer\XRNeckSaferApp.exe"
 
-    $StartedVectorXR = Start-CompanionApp -DisplayName "VectorXR" -ProcessName "vectorxr-app" `
-        -Path "C:\Program Files\VectorXR\vectorxr-app.exe"
+    # $StartedVectorXR = Start-CompanionApp -DisplayName "VectorXR" -ProcessName "vectorxr-app" `
+    #     -Path "C:\Program Files\VectorXR\vectorxr-app.exe"
 
     $StartedSRS = Start-CompanionApp -DisplayName "IL2 SimpleRadio" -ProcessName "IL2-SR-ClientRadio" `
         -Path "C:\Program Files\IL2-SimpleRadio-Standalone\IL2-SR-ClientRadio.exe" `
@@ -273,12 +273,12 @@ try {
 }
 finally {
     # Only close companion apps this script launched
-    # if ($StartedXRNeckSafer) {
-    #     Stop-ApplicationGracefully -ProcessName "XRNeckSaferApp" -DisplayName "XRNeckSafer"
-    # }
-    if ($StartedVectorXR) {
-        Stop-ApplicationGracefully -ProcessName "vectorxr-app" -DisplayName "VectorXR"
+    if ($StartedXRNeckSafer) {
+        Stop-ApplicationGracefully -ProcessName "XRNeckSaferApp" -DisplayName "XRNeckSafer"
     }
+    # if ($StartedVectorXR) {
+    #     Stop-ApplicationGracefully -ProcessName "vectorxr-app" -DisplayName "VectorXR"
+    # }
     if ($StartedSRS) {
         Stop-ApplicationGracefully -ProcessName "IL2-SR-ClientRadio" -DisplayName "IL2 SimpleRadio"
     }

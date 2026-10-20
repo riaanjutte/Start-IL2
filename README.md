@@ -3,20 +3,20 @@
 A PowerShell script that automates the IL-2 Sturmovik session setup and teardown:
 
 - Switches the default audio device to your headset when the game starts
-- Launches VectorXR, [IL2 SimpleRadio Standalone](https://github.com/ciribob/IL2-SimpleRadioStandalone) and [OpenKneeboard](https://openkneeboard.com/) if they are not already running
+- Launches [XRNeckSafer](https://store.steampowered.com/app/1069750/XRNeckSafer/), [IL2 SimpleRadio Standalone](https://github.com/ciribob/IL2-SimpleRadioStandalone) and [OpenKneeboard](https://openkneeboard.com/) if they are not already running
 - Waits for IL-2 Great Battles (`Il-2.exe`) or IL-2 Korea (`IL2Series.exe`) to exit, then closes the companion apps it launched and restores the desktop audio device
 
 ## Requirements
 
 - Windows PowerShell 5.1
 - [AudioDeviceCmdlets](https://github.com/frgnca/AudioDeviceCmdlets) module (`Install-Module -Name AudioDeviceCmdlets`)
-- VectorXR installed at `C:\Program Files\VectorXR\`
+- XRNeckSafer installed at `C:\Program Files\XRNeckSafer\`
 - IL2 SimpleRadio Standalone installed at `C:\Program Files\IL2-SimpleRadio-Standalone\`
 - OpenKneeboard installed at `C:\Program Files\OpenKneeboard\`
 
 If a companion app isn't found at its path, the script prints a warning, skips it, and carries on with the rest of the session.
 
-[XRNeckSafer](https://store.steampowered.com/app/1069750/XRNeckSafer/) support is still in the script but commented out. Uncomment the `XRNeckSafer` lines in `Start-IL2.ps1` to use it again.
+VectorXR support (`C:\Program Files\VectorXR\vectorxr-app.exe`) is still in the script but commented out. To switch to it, uncomment the `VectorXR` lines in `Start-IL2.ps1` and comment out the `XRNeckSafer` ones.
 
 ## First-run setup
 
